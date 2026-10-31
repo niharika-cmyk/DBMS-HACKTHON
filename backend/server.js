@@ -72,6 +72,25 @@ async function initDatabase() {
     conn.release();
     useMySQL = true;
     console.log('✓ Connected to MySQL → smart_inventory');
+
+    // Auto-seed initial reference data if tables are empty
+    try {
+      const [sCount] = await dbPool.query('SELECT COUNT(*) as cnt FROM suppliers');
+      if (sCount[0].cnt === 0) {
+        for (const s of mockDb.suppliers) {
+          await dbPool.query('INSERT IGNORE INTO suppliers (id, name, contact_email, phone) VALUES (?, ?, ?, ?)', [s.id, s.name, s.contact_email, s.phone]);
+        }
+        for (const p of mockDb.products) {
+          await dbPool.query('INSERT IGNORE INTO products (id, name, sku, supplier_id, current_stock, min_stock_level, price) VALUES (?, ?, ?, ?, ?, ?, ?)', [p.id, p.name, p.sku, p.supplier_id, p.current_stock, p.min_stock_level, p.price]);
+        }
+        for (const t of mockDb.stock_transactions) {
+          await dbPool.query('INSERT IGNORE INTO stock_transactions (id, product_id, transaction_type, quantity, transaction_date, notes) VALUES (?, ?, ?, ?, ?, ?)', [t.id, t.product_id, t.transaction_type, t.quantity, t.transaction_date.slice(0, 19).replace('T', ' '), t.notes]);
+        }
+        console.log('✓ Initial seed completed in MySQL');
+      }
+    } catch (seedErr) {
+      console.warn('Auto-seed check notice:', seedErr.message);
+    }
   } catch (err) {
     useMySQL = false;
     console.log(`ℹ MySQL unavailable (${err.message}). Running with in-memory fallback store.`);
@@ -251,9 +270,14 @@ app.post('/api/products', asyncHandler(async (req, res) => {
   if (!sku?.trim()) return res.status(400).json({ error: 'SKU is required' });
 
   if (useMySQL) {
+    let validSupplierId = null;
+    if (supplier_id) {
+      const [sRows] = await dbQuery('SELECT id FROM suppliers WHERE id = ?', [supplier_id]);
+      if (sRows.length > 0) validSupplierId = supplier_id;
+    }
     const [result] = await dbQuery(
       'INSERT INTO products (name, sku, supplier_id, current_stock, min_stock_level, price) VALUES (?, ?, ?, ?, ?, ?)',
-      [name.trim(), sku.trim().toUpperCase(), supplier_id || null, Number(current_stock), Number(min_stock_level), price ? Number(price) : null]
+      [name.trim(), sku.trim().toUpperCase(), validSupplierId, Number(current_stock) || 0, Number(min_stock_level) || 10, price ? Number(price) : null]
     );
     const [rows] = await dbQuery(
       'SELECT p.*, s.name AS supplier_name FROM products p LEFT JOIN suppliers s ON p.supplier_id = s.id WHERE p.id = ?',
@@ -287,9 +311,14 @@ app.put('/api/products/:id', asyncHandler(async (req, res) => {
   if (!name?.trim()) return res.status(400).json({ error: 'Product name is required' });
 
   if (useMySQL) {
+    let validSupplierId = null;
+    if (supplier_id) {
+      const [sRows] = await dbQuery('SELECT id FROM suppliers WHERE id = ?', [supplier_id]);
+      if (sRows.length > 0) validSupplierId = supplier_id;
+    }
     const [result] = await dbQuery(
       'UPDATE products SET name = ?, sku = ?, supplier_id = ?, min_stock_level = ?, price = ? WHERE id = ?',
-      [name.trim(), sku?.trim().toUpperCase(), supplier_id || null, Number(min_stock_level) || 10, price ? Number(price) : null, id]
+      [name.trim(), sku?.trim().toUpperCase(), validSupplierId, Number(min_stock_level) || 10, price ? Number(price) : null, id]
     );
     if (result.affectedRows === 0) return res.status(404).json({ error: 'Product not found' });
     const [rows] = await dbQuery(

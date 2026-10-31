@@ -5,7 +5,8 @@
  * when deployed on static CDNs (e.g., GitHub Pages).
  */
 
-const API_BASE = import.meta.env?.VITE_API_BASE_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api');
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const API_BASE = import.meta.env?.VITE_API_BASE_URL || (isLocal ? 'http://localhost:5000/api' : '/api');
 
 // ─── Initial Seed Data ────────────────────────────────────────────────────────
 const INITIAL_SUPPLIERS = [
