@@ -1,0 +1,29 @@
+{
+  "name": "sanchay-backend",
+  "version": "1.0.0",
+  "description": "SANCHAY Smart Inventory Management System - Backend API",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "inventory",
+    "management",
+    "express",
+    "mysql",
+    "ai-predictions"
+  ],
+  "author": "SANCHAY Team",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.9.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

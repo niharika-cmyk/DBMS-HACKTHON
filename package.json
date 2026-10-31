@@ -1,0 +1,22 @@
+{
+  "name": "sanchay-ai",
+  "version": "1.0.0",
+  "description": "SANCHAY AI - Smart Inventory Management System with ML Demand Forecasting",
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "node backend/server.js",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend"
+  },
+  "keywords": [
+    "inventory",
+    "management",
+    "ai",
+    "forecasting",
+    "react",
+    "express"
+  ],
+  "author": "SANCHAY Team",
+  "license": "ISC"
+}
